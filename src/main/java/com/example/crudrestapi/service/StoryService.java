@@ -41,7 +41,7 @@ public class StoryService {
                 cs.setTitle(story.getTitle());
                 cs.setDescription(story.getDescription());
                 cs.setSlug(story.getSlug());
-                cs.setAuthorUsername(story.getAuthorUsername());
+                cs.setAuthorUsername(userDetails.getUsername());
                 return repository.save(cs);
             }).orElseGet(() -> null);
         }

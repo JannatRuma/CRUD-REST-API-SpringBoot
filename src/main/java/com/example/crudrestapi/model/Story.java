@@ -23,7 +23,6 @@ public class Story {
     private String title;
     @NotNull(message = "Description can not be null")
     private String description;
-    private String slug;
     @NotNull(message = "Author Username must be included")
     private String authorUsername;
 }

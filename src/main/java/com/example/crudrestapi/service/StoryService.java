@@ -28,9 +28,7 @@ public class StoryService {
     public Optional<Story> getStoryById(int id) {
         return repository.findById(id);
     }
-    public Story getStoryBySlug(String slug) {
-        return repository.findBySlug(slug);
-    }
+
     public Story editStoryById(int id, Story story, UserDetails userDetails) throws Exception {
         Optional<Story> currentStory = repository.findById(id);
         if (currentStory.isPresent()) {
@@ -40,7 +38,6 @@ public class StoryService {
             return currentStory.map(cs -> {
                 cs.setTitle(story.getTitle());
                 cs.setDescription(story.getDescription());
-                cs.setSlug(story.getSlug());
                 cs.setAuthorUsername(userDetails.getUsername());
                 return repository.save(cs);
             }).orElseGet(() -> null);

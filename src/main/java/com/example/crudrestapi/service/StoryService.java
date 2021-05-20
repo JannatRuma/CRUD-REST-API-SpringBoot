@@ -5,7 +5,6 @@ import com.example.crudrestapi.repository.StoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +14,12 @@ import java.util.Optional;
 
 @Service
 public class StoryService {
-    @Autowired
-    private StoryRepository repository;
+
+    private final StoryRepository repository;
+
+    public StoryService(final StoryRepository repository) {
+        this.repository = repository;
+    }
 
     public Story createStory(Story story, UserDetails userDetails) {
         story.setAuthorUsername(userDetails.getUsername());
@@ -44,16 +47,16 @@ public class StoryService {
         }
         return null;
     }
-    public ResponseEntity<?> deleteStoryById(int id, UserDetails userDetails) {
+    public String deleteStoryById(int id, UserDetails userDetails) {
         Optional <Story> currentStory = repository.findById(id);
         if (currentStory.isPresent()) {
             if (!userDetails.getUsername().equals(currentStory.get().getAuthorUsername())) {
-                return new ResponseEntity<>("You are not allowed to edit this file", HttpStatus.UNAUTHORIZED);
+                return "You are not allowed to delete this file";
             }
-            return new ResponseEntity<>(currentStory.map(cs -> {
+            currentStory.map(cs -> {
                 repository.deleteById(id);
-                return "Story with id: " + id + " is deleted.";}), HttpStatus.OK);
+                return "Story with id: " + id + " is deleted.";});
         }
-        return new ResponseEntity<>("Story Not Found", HttpStatus.NOT_FOUND);
+        return "Story Not Found";
     }
 }

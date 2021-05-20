@@ -4,6 +4,7 @@ import com.example.crudrestapi.service.StoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,14 +13,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-
 class StoryControllerTest {
 
     private final StoryService service = mock(StoryService.class);
     private final Authentication authentication = mock(Authentication.class);
-
 
     private final StoryController controller = new StoryController(service);
 
@@ -31,6 +28,7 @@ class StoryControllerTest {
                 .thenReturn(story);
         ResponseEntity<?> entity = controller.createStory(story, authentication);
         assertEquals(entity.getStatusCode(), HttpStatus.CREATED);
+        verify(service).createStory(story, (UserDetails) authentication.getPrincipal());
     }
 
     @Test

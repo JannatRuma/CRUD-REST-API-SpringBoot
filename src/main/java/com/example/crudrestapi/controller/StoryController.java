@@ -56,12 +56,12 @@ public class StoryController {
 
     @DeleteMapping("/story/{id}")
     public ResponseEntity<?> deleteStoryById(@PathVariable int id, Authentication authentication) {
-        String storyDeleteMsg = service.deleteStoryById(id, (UserDetails) authentication.getPrincipal());
-        if (storyDeleteMsg == null) {
+        Optional <String> storyDeleteMsg = service.deleteStoryById(id, (UserDetails) authentication.getPrincipal());
+        if (storyDeleteMsg.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        if (storyDeleteMsg.equals("You are not allowed to delete this file")) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (storyDeleteMsg.equals(Optional.of("You are not allowed to delete this file"))) {
+            return new ResponseEntity<>(storyDeleteMsg, HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity<>(storyDeleteMsg, HttpStatus.OK);
     }

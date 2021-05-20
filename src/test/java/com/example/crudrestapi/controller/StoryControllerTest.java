@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Optional;
+
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 
@@ -68,7 +70,7 @@ class StoryControllerTest {
     @DisplayName("Should not Delete Story because story id not found (Story Controller file)")
     void shouldNotDeleteStory() {
         when(service.deleteStoryById(1,  (UserDetails) authentication.getPrincipal()))
-                .thenReturn(null);
+                .thenReturn(Optional.empty());
         ResponseEntity<?>entity = controller.deleteStoryById(1, authentication);
         assertEquals(entity.getStatusCode(), HttpStatus.NOT_FOUND);
     }
@@ -76,7 +78,7 @@ class StoryControllerTest {
     @DisplayName("Should Delete Story with all valid information (Story Controller file)")
     void shouldDeleteStory() {
         when(service.deleteStoryById(1,  (UserDetails) authentication.getPrincipal()))
-                .thenReturn("Story with id: 1 is deleted.");
+                .thenReturn(Optional.of("Story with id: 1 is deleted."));
         ResponseEntity<?>entity = controller.deleteStoryById(1, authentication);
         assertEquals(entity.getStatusCode(), HttpStatus.OK);
     }

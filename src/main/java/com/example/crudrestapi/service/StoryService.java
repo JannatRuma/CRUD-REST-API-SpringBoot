@@ -2,9 +2,6 @@ package com.example.crudrestapi.service;
 
 import com.example.crudrestapi.model.Story;
 import com.example.crudrestapi.repository.StoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -47,16 +44,16 @@ public class StoryService {
         }
         return null;
     }
-    public String deleteStoryById(int id, UserDetails userDetails) {
+    public Optional<String> deleteStoryById(int id, UserDetails userDetails) {
         Optional <Story> currentStory = repository.findById(id);
         if (currentStory.isPresent()) {
             if (!userDetails.getUsername().equals(currentStory.get().getAuthorUsername())) {
-                return "You are not allowed to delete this file";
+                return Optional.of("You are not allowed to delete this file");
             }
-            currentStory.map(cs -> {
+            return currentStory.map(cs -> {
                 repository.deleteById(id);
                 return "Story with id: " + id + " is deleted.";});
         }
-        return "Story Not Found";
+        return Optional.of("Story Not Found");
     }
 }

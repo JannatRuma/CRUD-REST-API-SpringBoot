@@ -9,12 +9,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -24,8 +30,33 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private LoginUserService loginUserService;
 
+    private String readInputStreamInStringFormat(InputStream stream, Charset charset) throws IOException {
+        final int MAX_BODY_SIZE = 1024;
+        final StringBuilder bodyStringBuilder = new StringBuilder();
+        if (!stream.markSupported()) {
+            stream = new BufferedInputStream(stream);
+        }
+
+        stream.mark(MAX_BODY_SIZE + 1);
+        final byte[] entity = new byte[MAX_BODY_SIZE + 1];
+        final int bytesRead = stream.read(entity);
+
+        if (bytesRead != -1) {
+            bodyStringBuilder.append(new String(entity, 0, Math.min(bytesRead, MAX_BODY_SIZE), charset));
+            if (bytesRead > MAX_BODY_SIZE) {
+                bodyStringBuilder.append("...");
+            }
+        }
+        stream.reset();
+
+        return bodyStringBuilder.toString();
+    }
+
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        System.out.println(request.getQueryString());
+
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -46,6 +77,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+//                if (request.getMethod().equals("PUT") || request.getMethod().equals("DELETE")) {
+//                    if (isAuthorized(username, request.get))
+//                }
             }
         }
         filterChain.doFilter(request, response);

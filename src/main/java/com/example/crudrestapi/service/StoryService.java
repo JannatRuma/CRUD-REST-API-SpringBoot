@@ -18,42 +18,24 @@ public class StoryService {
         this.repository = repository;
     }
 
-    public Story createStory(Story story, UserDetails userDetails) {
-        story.setAuthorUsername(userDetails.getUsername());
+    public Story createStory(Story story) {
         return repository.save(story);
     }
     public List<Story> getStories() {
         return repository.findAll();
     }
-    public Optional<Story> getStoryById(int id) {
-        return repository.findById(id);
+    public Story getStoryById(int id) {
+        Optional <Story> story = repository.findById(id);
+        return story.orElse(null);
     }
 
-    public Story editStoryById(int id, Story story, UserDetails userDetails) throws Exception {
-        Optional<Story> currentStory = repository.findById(id);
-        if (currentStory.isPresent()) {
-            if (!currentStory.get().getAuthorUsername().equals(userDetails.getUsername())) {
-                throw new AccessDeniedException("You are not allowed to edit the file");
-            }
-            return currentStory.map(cs -> {
-                cs.setTitle(story.getTitle());
-                cs.setDescription(story.getDescription());
-                cs.setAuthorUsername(userDetails.getUsername());
-                return repository.save(cs);
-            }).orElseGet(() -> null);
-        }
-        return null;
+    public Story editStoryById(Story story, Story existingStory) {
+        if (story.getTitle() != null) existingStory.setTitle(story.getTitle());
+        if (story.getDescription() != null) existingStory.setDescription(story.getDescription());
+        return repository.save(existingStory);
     }
-    public Optional<String> deleteStoryById(int id, UserDetails userDetails) {
-        Optional <Story> currentStory = repository.findById(id);
-        if (currentStory.isPresent()) {
-            if (!userDetails.getUsername().equals(currentStory.get().getAuthorUsername())) {
-                return Optional.of("You are not allowed to delete this file");
-            }
-            return currentStory.map(cs -> {
-                repository.deleteById(id);
-                return "Story with id: " + id + " is deleted.";});
-        }
-        return Optional.of("Story Not Found");
+    public String deleteStoryById(int id) {
+        repository.deleteById(id);
+        return "Story with id: " + id + " is successfully deleted!";
     }
 }

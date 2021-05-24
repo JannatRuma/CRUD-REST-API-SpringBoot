@@ -30,29 +30,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private LoginUserService loginUserService;
 
-    private String readInputStreamInStringFormat(InputStream stream, Charset charset) throws IOException {
-        final int MAX_BODY_SIZE = 1024;
-        final StringBuilder bodyStringBuilder = new StringBuilder();
-        if (!stream.markSupported()) {
-            stream = new BufferedInputStream(stream);
-        }
-
-        stream.mark(MAX_BODY_SIZE + 1);
-        final byte[] entity = new byte[MAX_BODY_SIZE + 1];
-        final int bytesRead = stream.read(entity);
-
-        if (bytesRead != -1) {
-            bodyStringBuilder.append(new String(entity, 0, Math.min(bytesRead, MAX_BODY_SIZE), charset));
-            if (bytesRead > MAX_BODY_SIZE) {
-                bodyStringBuilder.append("...");
-            }
-        }
-        stream.reset();
-
-        return bodyStringBuilder.toString();
-    }
-
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         System.out.println(request.getQueryString());
@@ -77,10 +54,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-//                if (request.getMethod().equals("PUT") || request.getMethod().equals("DELETE")) {
-//                    if (isAuthorized(username, request.get))
-//                }
             }
         }
         filterChain.doFilter(request, response);

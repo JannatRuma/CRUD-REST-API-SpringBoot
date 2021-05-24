@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,9 +34,9 @@ public class StoryController {
             produces = { "application/json", "application/xml" },
             method = RequestMethod.GET)
     public ResponseEntity<Story> getStory(@PathVariable int id) {
-        return service.getStoryById(id)
-                .map(story -> new ResponseEntity<>(story, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Story story = service.getStoryById(id);
+        if (story == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(story, HttpStatus.OK);
     }
 
     @PostMapping("/story")
@@ -43,26 +44,36 @@ public class StoryController {
         if (story.getAuthorUsername() != null) {
             return new ResponseEntity<>("You should not include the author username in the request body!! Login first", HttpStatus.UNAUTHORIZED);
         }
-        Story createdStory = service.createStory(story, (UserDetails) authentication.getPrincipal());
+        story.setAuthorUsername(((UserDetails)authentication.getPrincipal()).getUsername());
+        Story createdStory = service.createStory(story);
         return new ResponseEntity<>(createdStory, HttpStatus.CREATED);
     }
 
     @PutMapping("/story/{id}")
     public ResponseEntity<Story> editStoryById(@PathVariable int id, @RequestBody Story story, Authentication authentication) throws Exception{
-        Optional <Story> updatedStory = Optional.ofNullable(service.editStoryById(id, story, (UserDetails) authentication.getPrincipal()));
-        return updatedStory.map(us -> new ResponseEntity<>(us, HttpStatus.OK)
-        ).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Story existingStory = service.getStoryById(id);
+        if (existingStory == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        if (!existingStory.getAuthorUsername().equals(((UserDetails)authentication.getPrincipal()).getUsername())) {
+            throw new AccessDeniedException("You are not allowed to edit the file");
+        }
+        Story updatedStory = service.editStoryById(story, existingStory);
+        return new ResponseEntity<>(updatedStory, HttpStatus.OK);
+
     }
 
     @DeleteMapping("/story/{id}")
     public ResponseEntity<?> deleteStoryById(@PathVariable int id, Authentication authentication) {
-        Optional <String> storyDeleteMsg = service.deleteStoryById(id, (UserDetails) authentication.getPrincipal());
-        if (storyDeleteMsg.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        Story existingStory = service.getStoryById(id);
+        if (existingStory == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        String loggedInUsername = ((UserDetails)authentication.getPrincipal()).getUsername();
+        String existingStoryAuthor = existingStory.getAuthorUsername();
+
+        if (!existingStoryAuthor.equals(loggedInUsername)) {
+            return new ResponseEntity<>("You are not allowed to delete this story", HttpStatus.UNAUTHORIZED);
         }
-        if (storyDeleteMsg.equals(Optional.of("You are not allowed to delete this file"))) {
-            return new ResponseEntity<>(storyDeleteMsg, HttpStatus.UNAUTHORIZED);
-        }
-        return new ResponseEntity<>(storyDeleteMsg, HttpStatus.OK);
+        String deleteAndGetMsg = service.deleteStoryById(id);
+        return new ResponseEntity<>(deleteAndGetMsg, HttpStatus.OK);
+
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class AuthorController {
@@ -36,6 +37,8 @@ public class AuthorController {
     public String getAuthors() {
         return ("<h1>Authors</h1>");
     }
+
+
     @PostMapping("/register")
     public ResponseEntity<?> createAuthor(@RequestBody Author author) {
         if (service.userExistByUsername(author.getUsername())) {
@@ -47,10 +50,14 @@ public class AuthorController {
         service.createAuthor(author);
         return new ResponseEntity<>("Account Created", HttpStatus.CREATED);
     }
+
+
     @GetMapping("/login")
     public String get() {
         return ("<h1>Login</h1>");
     }
+
+
     @PostMapping("/login")
     public ResponseEntity<?>createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
         try {
@@ -58,7 +65,7 @@ public class AuthorController {
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
             );
         } catch(BadCredentialsException e) {
-            throw new Exception("Incorrect Username or Password ", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect Username or Password ", e);
         }
         final UserDetails userDetails = loginUserService
                 .loadUserByUsername(authenticationRequest.getUsername());
